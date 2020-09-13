@@ -3,6 +3,8 @@ import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import io from "socket.io-client";
 import "../styles/board.css";
+import axios from 'axios';
+
 
 const Board = (props) => {
   const canvasRef = useRef(null);
@@ -141,6 +143,14 @@ const Board = (props) => {
     canvas.height = window.innerHeight;
   };
 
+  const downloadImg = async () => {
+    const canvas = canvasRef.current;
+    var dataURL = canvas.toDataURL();
+    console.log(dataURL);
+    var text = await axios.post(`http://localhost:4000/process-text`, {imgUrl: dataURL});
+    console.log(text);
+  }
+
   const clearCanvas = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -218,7 +228,7 @@ const Board = (props) => {
           </ButtonGroup>
           <Button onClick={() => clearCanvas()}>Clear</Button>
           <Button>Done</Button>
-          <Button>Download</Button>
+          <Button onClick={() => downloadImg()}>Download</Button>
         </div>
       )}
     </div>

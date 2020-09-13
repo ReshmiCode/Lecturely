@@ -135,11 +135,12 @@ app.get("/", (req, res) => {
   res.send("server running");
 });
 
-app.get("/process-text", async (req, res) => {
+app.post("/process-text", async (req, res) => {
   try {
-    const [result] = await client.documentTextDetection("./sample.png");
+    const [result] = await client.documentTextDetection(req.body.imgUrl);
     const fullTextAnnotation = result.fullTextAnnotation;
     console.log(`Full text: ${fullTextAnnotation.text}`);
+    res.send(fullTextAnnotation.text);
   } catch (e) {
     console.log("Error: " + e);
   }
