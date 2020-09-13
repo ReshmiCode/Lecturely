@@ -149,7 +149,7 @@ const Home = () => {
               </Button>
             </>
           )}
-          {!isTeacher && (
+          {saved && !isTeacher && (
             <>
               <p>Enter your class code:</p>
               <input type="text" value={classCode} onChange={handleChange} />
@@ -158,6 +158,7 @@ const Home = () => {
                 style={{
                   marginBottom: "1rem",
                   backgroundColor: "rgb(127,238,230)",
+                  marginTop: "0.5rem",
                 }}
               >
                 <Link

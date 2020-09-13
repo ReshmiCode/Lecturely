@@ -18,7 +18,7 @@ students.on("connection", (socket) => {
     socketID: socket.id,
     userID: socket.handshake.query["id"],
   });
-  teachers.emit("update_students");
+  teachers.emit("update_students", studentsList);
 
   socket.on("drawing", (data) => {
     teachers.emit("drawing", data);
@@ -29,17 +29,24 @@ students.on("connection", (socket) => {
       studentsList.findIndex((item) => item.socketID === socket.id),
       1
     );
-    teachers.emit("update_students");
+    teachers.emit("update_students", studentsList);
   });
 });
 
 teachers.on("connection", (socket) => {
   console.log("teacher connection");
 
-  socket.on("update_students", (data) => {
-    // implementing this as state in the frontend may erase previous student whiteboards uh
-    teachers.emit("update_students", students);
-  });
+  if (
+    studentsList.findIndex(
+      (item) => item.userID === socket.handshake.query["id"]
+    ) !== -1
+  ) {
+    studentsList.push({
+      socketID: socket.id,
+      userID: socket.handshake.query["id"],
+    });
+    teachers.emit("update_students", studentsList);
+  }
 
   socket.on("drawing", (data) => {
     students.emit("drawing", data);

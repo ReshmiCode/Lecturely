@@ -1,16 +1,11 @@
 import React, { useRef, useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
-import io from "socket.io-client";
 import "../styles/board.css";
-import axios from 'axios';
-
-// const vision = require("@google-cloud/vision");
-// const client = new vision.ImageAnnotatorClient();
 
 const Board = (props) => {
   const canvasRef = useRef(null);
-  const socketRef = useRef();
   const current = {
     color: "black",
   };
@@ -29,12 +24,18 @@ const Board = (props) => {
       const offset = canvas.getBoundingClientRect();
 
       context.beginPath();
-      context.moveTo(x0 - offset.x, y0 - offset.y);
-      context.lineTo(x1 - offset.x, y1 - offset.y);
+      context.moveTo(Math.abs(x0 - offset.x), Math.abs(y0 - offset.y));
+      context.lineTo(Math.abs(x1 - offset.x), Math.abs(y1 - offset.y));
+      //context.moveTo(x0 - offset.x, y0 - offset.y);
+      //context.lineTo(x1 - offset.x, y1 - offset.y);
       context.strokeStyle = color;
       context.lineWidth = 2;
       context.stroke();
       context.closePath();
+
+      //console.log(x0 - offset.x + " -> 1");
+      //console.log(y0 - offset.y);
+      //console.log(x1 - offset.x + " " + y1 - offset.y);
 
       if (!emit) {
         return;
@@ -42,7 +43,7 @@ const Board = (props) => {
       const w = canvas.width;
       const h = canvas.height;
 
-      socketRef.current.emit("drawing", {
+      props.socket.emit("drawing", {
         boardid: props.id,
         sessionid: props.sessionid,
         isteacher: props.sessionid === props.id,
@@ -127,16 +128,14 @@ const Board = (props) => {
 
     // ----------------------- socket.io connection ----------------------------
     const onDrawingEvent = (data) => {
+      console.log(data.boardid + " " + props.id);
+      if (data.boardid !== props.id) return;
       const w = canvas.width;
       const h = canvas.height;
       drawLine(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color);
     };
 
-    socketRef.current = io.connect(
-      props.socketConnection || "http://localhost:4000"
-    );
-
-    socketRef.current.on("drawing", onDrawingEvent);
+    props.socket.on("drawing", onDrawingEvent);
   }, []);
 
   const onResize = () => {
@@ -144,14 +143,6 @@ const Board = (props) => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
   };
-
-  const downloadImg = async () => {
-    const canvas = canvasRef.current;
-    var dataURL = canvas.toDataURL();
-    console.log(dataURL);
-    var text = await axios.post(`http://localhost:4000/process-text`, {imgUrl: dataURL});
-    console.log(text);
-  }
 
   const clearCanvas = () => {
     const canvas = canvasRef.current;
@@ -161,6 +152,7 @@ const Board = (props) => {
 
   const downloadImage = async () => {
     console.log("Smiley");
+    setTranscipt("Smiley");
     // var canvas = document.getElementById("canvas");
     // var dataURL = canvas.toDataURL();
     // console.log(dataURL);
@@ -173,11 +165,6 @@ const Board = (props) => {
     // }
   };
 
-  const changeColor = (color) => {
-    console.log(color);
-    current.color = color;
-  };
-
   // ------------- The Canvas and color elements --------------------------
 
   return (
@@ -188,7 +175,6 @@ const Board = (props) => {
           className={props.styling}
           width="300"
           height="200"
-          id="canvas"
         />
       ) : (
         <canvas
@@ -207,7 +193,7 @@ const Board = (props) => {
                 backgroundColor: "#000",
                 color: "white",
               }}
-              onClick={() => changeColor("black")}
+              onClick={() => (current.color = "black")}
             >
               Black
             </Button>
@@ -216,7 +202,7 @@ const Board = (props) => {
                 backgroundColor: "#eb1710",
                 color: "white",
               }}
-              onClick={() => changeColor("red")}
+              onClick={() => (current.color = "red")}
             >
               Red
             </Button>
@@ -225,7 +211,7 @@ const Board = (props) => {
                 backgroundColor: "#158a15",
                 color: "white",
               }}
-              onClick={() => changeColor("green")}
+              onClick={() => (current.color = "green")}
             >
               Green
             </Button>
@@ -234,7 +220,7 @@ const Board = (props) => {
                 backgroundColor: "#1029e6",
                 color: "white",
               }}
-              onClick={() => changeColor("blue")}
+              onClick={() => (current.color = "blue")}
             >
               Blue
             </Button>
@@ -243,14 +229,22 @@ const Board = (props) => {
                 backgroundColor: "orange",
                 color: "white",
               }}
-              onClick={() => changeColor("yellow")}
+              onClick={() => (current.color = "yellow")}
             >
               Yellow
             </Button>
           </ButtonGroup>
           <Button onClick={() => clearCanvas()}>Clear</Button>
-          <Button>Done</Button>
-          <Button onClick={() => downloadImg()}>Download</Button>
+          <Link to={`/`}>
+            <Button>Done</Button>
+          </Link>
+          <Button onClick={() => downloadImage()}>Get Transcript</Button>
+          {transcript.length > 1 && (
+            <div>
+              <h3>Transcript:</h3>
+              <p>{transcript}</p>
+            </div>
+          )}
         </div>
       )}
     </div>
